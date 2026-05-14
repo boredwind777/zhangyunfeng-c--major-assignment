@@ -29,7 +29,6 @@ MenuWindow::MenuWindow(QWidget *parent)
     connect(storyTimer, &QTimer::timeout, this, &MenuWindow::updateStory);
     storyTimer->start(1500);
 
-    // ========== 只创建一次按钮！！！ ==========
     btnStart = new QPushButton("踏入领域 · 奔赴狱门", this);
     btnStart->setFixedSize(260, 70);
     btnStart->hide();
@@ -66,7 +65,6 @@ void MenuWindow::updateStory()
         storyTimer->stop();
         storyFinished = true;
 
-        // ========== 按钮位置，改这里就动！ ==========
         btnStart->move(470, 680);
         btnStart->show();
     }

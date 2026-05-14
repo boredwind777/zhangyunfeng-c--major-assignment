@@ -121,8 +121,8 @@ private:
     const int maxJump = 2;
     bool jumppressedlast;
     bool onGround;
-    int animFrame = 0;    // 动画帧
-    double animTimer = 0; // 计时
+    int animFrame = 0;
+    double animTimer = 0;
      const int walkFrames = 2;
      int faceDir = 1;
 public:
@@ -177,9 +177,9 @@ private:
         QImage bgImage;
 
 public:
-    double saveX = 100;        // 存档X坐标（默认出生点）
-    double saveY = GAME_HEIGHT - PLAYER_SIZE;  // 存档Y坐标
-    bool hasSavePoint = false; // 是否激活过存档
+    double saveX = 100;
+    double saveY = GAME_HEIGHT - PLAYER_SIZE;
+    bool hasSavePoint = false;
 
     explicit GameWidget(QWidget *p = nullptr);
     ~GameWidget() override;

@@ -1,6 +1,11 @@
 <RCC>
     <qresource prefix="/picture">
         <file>widget-picture.jpg</file>
+        <file>start-picture.jpg</file>
+        <file>walk1.png</file>
+        <file>walk0.png</file>
+        <file>background.png</file>
+        <file>walk2.png</file>
     </qresource>
     <qresource prefix="/"/>
 </RCC>

@@ -3,6 +3,7 @@
 #include <QMessageBox>
 #include<menuwindow.h>
 #include<qdebug.h>
+#include<QImage>
 // ===================== 存档点 =====================
 void SavePoint::draw(QPainter &p, double camerax)
 {
@@ -200,6 +201,8 @@ void Player::init()
 
 void Player::move(double dt)
 {
+    if(vx > 0) faceDir = 1;
+    if(vx < 0) faceDir = -1;
     x += (vx + platformspeedx) * dt;
     y += vy * dt;
     onGround = false;
@@ -216,15 +219,47 @@ void Player::move(double dt)
     if (x < 0) x = 0;
     if (x > MAP_WIDTH - PLAYER_SIZE) x = MAP_WIDTH - PLAYER_SIZE;
     if (y < 0) y = 0;
+    if (vx != 0) {
+        animTimer += dt;
+        if (animTimer > 0.10) {       // 切换速度，越快越流畅
+            animFrame = (animFrame + 1) % walkFrames;
+            animTimer = 0;
+        }
+    } else {
+        // 不动时重置回第一帧
+        animFrame = 0;
+    }
+
 }
 
 void Player::draw(QPainter &p, double camerax)
 {
-    if(!isDying) p.setBrush(Qt::blue);
-    else p.setBrush(Qt::red);
-    p.drawRect((int)(x - camerax), (int)y, PLAYER_SIZE, PLAYER_SIZE);
-}
+    QString path;
+    // 静止用第0帧站姿，行走用动画帧
+    if (vx == 0) {
+        path = ":/picture/walk0.png";
+    } else {
+        path = QString(":/picture/walk%1.png").arg(animFrame);
+    }
 
+    QImage img(path);
+    p.save();
+
+    // 根据 faceDir 决定翻不翻转
+    if(faceDir < 0)
+    {
+        // 朝左：水平镜像 + 修正位置
+        p.scale(-1, 1);
+        p.drawImage(QRectF(-(x - camerax) - 30, y, 30, 30), img);
+    }
+    else
+    {
+        // 朝右：正常绘制
+        p.drawImage(QRectF(x - camerax, y, 30,30), img);
+    }
+
+    p.restore();
+}
 void Player::input(bool A, bool D, bool W)
 {
     if (A) vx = -MOVE_SPEED;
@@ -485,7 +520,7 @@ GameWidget::GameWidget(QWidget *p) : QWidget(p)
     setAttribute(Qt::WA_OpaquePaintEvent);
     setAttribute(Qt::WA_NoSystemBackground);
     lastTime.start();
-
+    bgImage.load(":/picture/background.png");
     connect(&timer, &QTimer::timeout, [this] {
 
         double rawDt = lastTime.restart() / 1000.0;
@@ -686,7 +721,7 @@ GameWidget::~GameWidget() { qDeleteAll(objs); }
 
 void GameWidget::drawGame(QPainter &p)
 {
-    p.fillRect(rect(), Qt::black);
+
     for (auto o : objs)
         o->draw(p, camerax);
     player.draw(p, camerax);
@@ -767,7 +802,21 @@ void GameWidget::drawGame(QPainter &p)
     }
 }
 
-void GameWidget::paintEvent(QPaintEvent*) { QPainter p(this); drawGame(p); }
+void GameWidget::paintEvent(QPaintEvent*)
+{
+    QPainter p(this);
+    p.setRenderHint(QPainter::Antialiasing);
+
+    // ========== 第一步：画背景（绝对不卡，一定显示） ==========
+    if (!bgImage.isNull()) {
+        p.drawImage(rect(), bgImage);  // 铺满窗口
+    } else {
+        p.fillRect(rect(), Qt::black); // 背景图加载失败就用黑色兜底
+    }
+
+    // ========== 第二步：画游戏内容（必须放在外面！） ==========
+    drawGame(p);
+}
 void GameWidget::keyPressEvent(QKeyEvent *e)
 {
     // ---------- 黑色虚化界面 ----------

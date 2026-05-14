@@ -121,7 +121,10 @@ private:
     const int maxJump = 2;
     bool jumppressedlast;
     bool onGround;
-
+    int animFrame = 0;    // 动画帧
+    double animTimer = 0; // 计时
+     const int walkFrames = 2;
+     int faceDir = 1;
 public:
     void init();
     void move(double dt);
@@ -171,6 +174,7 @@ private:
     int pauseSel = 0;
     bool isConfirmStart = true;
     bool isQuitSad = false;
+        QImage bgImage;
 
 public:
     double saveX = 100;        // 存档X坐标（默认出生点）
@@ -189,6 +193,7 @@ protected:
     void keyPressEvent(QKeyEvent*) override;
     void keyReleaseEvent(QKeyEvent*) override;
 };
+//===============存档================
 class SavePoint : public GameObject
 {
 public:

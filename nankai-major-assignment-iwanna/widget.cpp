@@ -2,6 +2,20 @@
 #include <QApplication>
 #include <QMessageBox>
 #include<menuwindow.h>
+#include<qdebug.h>
+//存档绘画
+void SavePoint::draw(QPainter &p, double camerax)
+{
+    if (!isVisible()) return;
+    // 未存档：青色；已存档：红色
+    if(saved)
+        p.setBrush(Qt::red);
+    else
+        p.setBrush(Qt::cyan);
+
+    p.setPen(Qt::white);
+    p.drawEllipse(x - camerax, y, w, h);
+}
 
 // ===================== 组件实现 =====================
 MoveHoriz::MoveHoriz(int l, int r, double sp)
@@ -225,7 +239,11 @@ void Player::input(bool A, bool D, bool W)
 }
 
 QRectF Player::rect() const { return QRectF(x, y, PLAYER_SIZE, PLAYER_SIZE); }
-void Player::respawn() { init(); }
+void Player::respawn() {
+
+        init();
+
+}
 double Player::getx() const { return x; }
 double Player::gety() const { return y; }
 double Player::setvx(double a) { vx=a; return vx; }
@@ -294,7 +312,10 @@ bool Player::checkCollisions(QVector<GameObject*>& objs, double dt)
                 vx = 0;
             }
         }
-        if (dynamic_cast<Spike*>(obj)) { hitSpike = true; }
+
+        if (dynamic_cast<Spike*>(obj)) {
+            hitSpike = true;
+        }
     }
     return hitSpike;
 }
@@ -302,6 +323,9 @@ bool Player::checkCollisions(QVector<GameObject*>& objs, double dt)
 // ===================== 游戏初始化 =====================
 void GameWidget::initGame()
 {
+    hasSavePoint = false;
+    saveX = 100;
+    saveY = GAME_HEIGHT - PLAYER_SIZE;
     player.init();
     keyA = keyD = keyW = false;
     setFixedSize(GAME_WIDTH, GAME_HEIGHT);
@@ -445,6 +469,9 @@ void GameWidget::initGame()
     auto s30 = new Spike(1370, 680, SPIKE_SIZE, SPIKE_SIZE); objs.append(s30);
 
     auto goal = new GoalBlade(1450, 620, 15, 80); objs.append(goal);
+//存档
+    auto save1 = new SavePoint(280, 300, 25, 25);  // X Y 宽高
+    objs.append(save1);
 
 }
 
@@ -477,6 +504,18 @@ GameWidget::GameWidget(QWidget *p) : QWidget(p)
         for (GameObject* obj : objs)
         {
             obj->update(dt);
+            if (dynamic_cast<SavePoint*>(obj)) {
+
+                if (!hasSavePoint && playerRect.intersects(obj->rect())) {
+                    saveX = obj->x;
+                    saveY = obj->y - PLAYER_SIZE;
+                    hasSavePoint = true;
+                    if (SavePoint* sp = dynamic_cast<SavePoint*>(obj)) {
+                        sp->saved = true;
+                    }
+                    qDebug() << "已存档！";
+                }
+            }
 
             if (obj->hiddenBoard && !obj->boardRevealed)
             {
@@ -570,10 +609,25 @@ GameWidget::GameWidget(QWidget *p) : QWidget(p)
             player.setvx(0);
             if(dyingTimer >= DYING_DELAY)
             {
-                player.respawn();
-                resetAllTraps();
                 isDying = false;
-                player.isDying = false;
+                      player.isDying = false;
+                // 有存档从存档点复活，没有就初始位置
+                if (hasSavePoint)
+                {
+                    player.setx(saveX)  ;
+                    player.sety(saveY);
+                    player.setvx(0);
+                    player.setvy(0);
+                    player.setOnGround(true);
+                       player.setJumpCount(0);
+                }
+                else
+                {
+                    player.respawn();
+                }
+
+                resetAllTraps();
+
             }
         }
 //文字提示
@@ -621,9 +675,13 @@ void GameWidget::resetAllTraps()
             obj->flylaunched = false; obj->isLocked = false; obj->triggered = false;
             obj->x = 710; obj->disappear->visible = false; obj->flyDir=1;
         }
+        // 重置存档点状态，变回青色
+        if (auto sp = dynamic_cast<SavePoint*>(obj))
+        {
+            sp->saved = false;
+        }
     }
 }
-
 GameWidget::~GameWidget() { qDeleteAll(objs); }
 
 void GameWidget::drawGame(QPainter &p)
@@ -664,12 +722,13 @@ void GameWidget::drawGame(QPainter &p)
         p.drawText(0,260,width(),40,Qt::AlignCenter,"D 键 — 向右移动");
         p.drawText(0,300,width(),40,Qt::AlignCenter,"W 键 — 跳跃（可二段跳）");
         p.drawText(0,340,width(),40,Qt::AlignCenter,"ESC — 打开暂停菜单");
+        p.drawText(0,380,width(),40,Qt::AlignCenter,"踩到青色圆点自动存档（已存档变红色）");
 
         // 操作选项
         p.setPen(Qt::white);
         p.setFont(QFont("Microsoft YaHei", 20));
         p.drawText(0,420,width(),60,Qt::AlignCenter,"空格 → 开始游戏");
-        p.drawText(0,470,width(),60,Qt::AlignCenter,"ESC  → 返回主菜单");
+        p.drawText(0,470,width(),60,Qt::AlignCenter,"ESC  → 返回开始剧情界面");
         return;
     }
     if(isPause)
@@ -697,7 +756,7 @@ void GameWidget::drawGame(QPainter &p)
         p.setPen(Qt::white);
         p.setFont(QFont("Microsoft YaHei",16));
         // 新增：加结束游戏选项
-        p.drawText(0,height()-110,width(),60,Qt::AlignCenter,"R 重新开始 | ESC 返回菜单 | Q 结束游戏");
+        p.drawText(0,height()-110,width(),60,Qt::AlignCenter,"R 重新开始 | ESC 返回开始剧情界面 | Q 结束游戏");
     }
     // 未通关遗憾离开 虚化界面
     if(isQuitSad)

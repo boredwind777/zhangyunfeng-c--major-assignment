@@ -130,11 +130,21 @@ public:
 
     double getx() const;
     double gety() const;
+    void setx(double a){x=a;}
+    void sety(double b){y=b;}
     double setvx(double a);
     double setvy(double b);
     double getvx();
     double getvy();
     bool getonground();
+    void setOnGround(bool on)
+    {
+           onGround = on;
+       }
+       void setJumpCount(int count)
+       {
+           jumpCount = count;
+}
 };
 
 // ===================== 游戏窗口 =====================
@@ -165,6 +175,9 @@ public:
     explicit GameWidget(QWidget *p = nullptr);
     ~GameWidget() override;
     void resetAllTraps();
+    bool hasSavePoint = false;
+      double saveX = 100;
+      double saveY = 0;
 private:
     void initGame();
     void drawGame(QPainter &p);
@@ -174,5 +187,15 @@ protected:
     void keyPressEvent(QKeyEvent*) override;
     void keyReleaseEvent(QKeyEvent*) override;
 };
+// ===================== 存档点 =====================
+class SavePoint : public GameObject
+{
+public:
+    using GameObject::GameObject;
+    void draw(QPainter &p, double camerax) override;
+     bool saved = false;
+};
+
+
 
 #endif

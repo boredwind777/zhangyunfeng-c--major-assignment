@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/picture">
+        <file>widget-picture.jpg</file>
+    </qresource>
+    <qresource prefix="/"/>
+</RCC>

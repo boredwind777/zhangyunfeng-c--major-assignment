@@ -221,7 +221,7 @@ void Player::move(double dt)
     if (y < 0) y = 0;
     if (vx != 0) {
         animTimer += dt;
-        if (animTimer > 0.10) {
+        if (animTimer > 0.10) {       // 切换速度，越快越流畅
             animFrame = (animFrame + 1) % walkFrames;
             animTimer = 0;
         }
@@ -248,13 +248,13 @@ void Player::draw(QPainter &p, double camerax)
     // 根据 faceDir 决定翻不翻转
     if(faceDir < 0)
     {
-
+        // 朝左：水平镜像 + 修正位置
         p.scale(-1, 1);
         p.drawImage(QRectF(-(x - camerax) - 30, y, 30, 30), img);
     }
     else
     {
-
+        // 朝右：正常绘制
         p.drawImage(QRectF(x - camerax, y, 30,30), img);
     }
 
@@ -539,7 +539,7 @@ GameWidget::GameWidget(QWidget *p) : QWidget(p)
         {
             obj->update(dt);
             if (dynamic_cast<SavePoint*>(obj)) {
-
+                // 已经存过就不重复存
                 if (!hasSavePoint && playerRect.intersects(obj->rect())) {
                     saveX = obj->x;
                     saveY = obj->y - PLAYER_SIZE;
@@ -688,7 +688,7 @@ GameWidget::GameWidget(QWidget *p) : QWidget(p)
     });
     timer.start(15);
 }
-//陷阱重置
+
 void GameWidget::resetAllTraps()
 {
     for (GameObject* obj : objs)
@@ -789,7 +789,7 @@ void GameWidget::drawGame(QPainter &p)
 
         p.setPen(Qt::white);
         p.setFont(QFont("Microsoft YaHei",16));
-
+        // 新增：加结束游戏选项
         p.drawText(0,height()-110,width(),60,Qt::AlignCenter,"R 重新开始 | ESC 返回菜单 | Q 结束游戏");
     }
     // 未通关遗憾离开 虚化界面
@@ -807,14 +807,14 @@ void GameWidget::paintEvent(QPaintEvent*)
     QPainter p(this);
     p.setRenderHint(QPainter::Antialiasing);
 
-
+    // ========== 第一步：画背景（绝对不卡，一定显示） ==========
     if (!bgImage.isNull()) {
-        p.drawImage(rect(), bgImage);
+        p.drawImage(rect(), bgImage);  // 铺满窗口
     } else {
-        p.fillRect(rect(), Qt::black);
+        p.fillRect(rect(), Qt::black); // 背景图加载失败就用黑色兜底
     }
 
-
+    // ========== 第二步：画游戏内容（必须放在外面！） ==========
     drawGame(p);
 }
 void GameWidget::keyPressEvent(QKeyEvent *e)
@@ -837,7 +837,7 @@ void GameWidget::keyPressEvent(QKeyEvent *e)
         return;
     }
 
-    // ---------- 悲伤退出界面----------
+    // ---------- 悲伤退出界面：只拦截，不影响后续游戏 ----------
     if(isQuitSad)
     {
         return;

@@ -13,7 +13,7 @@ public:
     explicit MenuWindow(QWidget *parent = nullptr);
 
 protected:
-    // 关键：重写绘制事件，显示剧情
+    // 重写绘制事件，显示剧情
     void paintEvent(QPaintEvent *event) override;
     void keyPressEvent(QKeyEvent *event) override;
 private slots:
@@ -21,10 +21,9 @@ private slots:
     void updateStory(); // 剧情自动刷新
 
 private:
-    QPushButton *btnStart; // 把按钮变成成员变量
-    QTimer *storyTimer;    // 剧情计时器
+    QPushButton *btnStart;
+    QTimer *storyTimer;
 
-    // 剧情数据
     int storyLine;
     QStringList storyTexts;
     bool storyFinished;
